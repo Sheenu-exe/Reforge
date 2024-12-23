@@ -10,12 +10,12 @@ dotenv.config();
 // Initialize express
 const app = express();
 
-// Middleware to allow cross-origin requests from your frontend (localhost:3000)
+// Middleware to allow cros s-origin requests from your frontend (localhost:3000)
 app.use(cors({
-  origin: ['http://localhost:3000','https://reforge-gamma.vercel.app'] ,// Your Next.js frontend URL
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Accept']
+  origin: ['http://localhost:3000', 'https://reforge-gamma.vercel.app'], // Local and live frontend URLs
+  credentials: true, // Enable cookies or auth headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // HTTP methods allowed
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Extend as needed
 }));
 
 app.use(express.json()); // Parse JSON requests
