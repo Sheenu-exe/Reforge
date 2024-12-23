@@ -12,7 +12,7 @@ const app = express();
 
 // Middleware to allow cross-origin requests from your frontend (localhost:3000)
 app.use(cors({
-  origin: 'http://localhost:3000', // Your Next.js frontend URL
+  origin: ['http://localhost:3000','https://reforge-gamma.vercel.app'] ,// Your Next.js frontend URL
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Accept']
