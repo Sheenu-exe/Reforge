@@ -11,8 +11,7 @@ dotenv.config();
 const app = express();
 
 // Middleware to allow cros s-origin requests from your frontend (localhost:3000)
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://reforge-gamma.vercel.app'], // Local and live frontend URLs
+app.use(cors({ // Local and live frontend URLs
   credentials: true, // Enable cookies or auth headers
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // HTTP methods allowed
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Extend as needed
