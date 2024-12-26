@@ -14,9 +14,10 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000','https://reforge-gamma.vercel.app/'],
+  origin: ['http://localhost:3000', 'https://reforge-gamma.vercel.app'], // Remove trailing slash and fix array syntax
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type'],
+  credentials: true // Enable if you're using cookies or authentication
 }));
 
 app.use(express.json());
