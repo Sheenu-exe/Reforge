@@ -29,8 +29,8 @@ const HabitTracker = () => {
       setIsLoading(true);
       setError(null);
       
-      const apiUrl = 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/habits`, {
+    
+      const response = await fetch(`https://reforge-backend.onrender.com/api/habits`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

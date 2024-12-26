@@ -173,7 +173,7 @@ const ChatScheduleAssistant = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/tasks', {
+      const response = await fetch(process.env.BACKEND_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
