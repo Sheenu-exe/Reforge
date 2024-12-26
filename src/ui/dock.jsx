@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Menu, X } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const DEFAULT_MAGNIFICATION = 60;
@@ -16,7 +16,7 @@ const Dock = React.forwardRef(
     direction = "bottom",
     ...props
   }, ref) => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
     const mouseX = useMotionValue(Infinity);
 
     const renderChildren = () => {
@@ -33,8 +33,8 @@ const Dock = React.forwardRef(
     };
 
     const splitChildren = React.Children.toArray(children);
-    const mainIcons = splitChildren.slice(0, 3);
-    const additionalIcons = splitChildren.slice(3);
+    const mainIcons = splitChildren.slice(0, 5);
+    const additionalIcons = splitChildren.slice(5);
 
     return (
       <>
@@ -63,27 +63,10 @@ const Dock = React.forwardRef(
             <div className="flex space-x-4">
               {mainIcons}
             </div>
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-white"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+          
           </div>
 
-          {isMobileMenuOpen && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 bg-black/50 backdrop-blur-md rounded-2xl p-4 flex flex-col space-y-4"
-            >
-              {additionalIcons.map((icon, index) => (
-                <div key={index} className="w-full flex justify-center">
-                  {icon}
-                </div>
-              ))}
-            </motion.div>
-          )}
+          
         </div>
       </>
     );

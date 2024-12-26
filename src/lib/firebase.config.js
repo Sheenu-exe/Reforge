@@ -1,6 +1,5 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import {getStorage} from "firebase/storage";
 import {getAuth} from "firebase/auth";
@@ -10,13 +9,13 @@ import {getAuth} from "firebase/auth";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDlFF7DSP2-yZ4xr-6S7O5Y9mkQQDpU1Vg",
-  authDomain: "habittracker-9a93c.firebaseapp.com",
-  projectId: "habittracker-9a93c",
-  storageBucket: "habittracker-9a93c.firebasestorage.app",
-  messagingSenderId: "1071873424873",
-  appId: "1:1071873424873:web:2856c9f48b7f6ea3259f78",
-  measurementId: "G-6GWV9B1V84"
+  apiKey: "AIzaSyAcQVc4ruk-vARspEx8SObQsafI61L53PE",
+  authDomain: "beyond-us-37f2a.firebaseapp.com",
+  projectId: "beyond-us-37f2a",
+  storageBucket: "beyond-us-37f2a.appspot.com",
+  messagingSenderId: "36368523989",
+  appId: "1:36368523989:web:943c43219cce4ea4b2785c",
+  measurementId: "G-8TVKCT32PT"
 };
 
 // Initialize Firebase
