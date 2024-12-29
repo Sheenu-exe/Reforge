@@ -6,7 +6,7 @@ const MainLayout = ({children}) => {
             <div className="flex-1">
                 {children}
             </div>
-            <div className="fixed bottom-0 left-0 w-[100vw] sm:w-fit z-50 py-4">
+            <div className="fixed bottom-0 left-0 w-full sm:w-fit h-fit z-50 ">
                 <DockDemo/>
             </div>
         </div>

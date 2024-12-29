@@ -29,8 +29,8 @@ function DockDemo() {
   }, []);
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[100vw] sm:w-fit z-50">
-      <div className="relative px-6 py-3 backdrop-blur-md bg-black/20 border border-white/10 rounded-2xl shadow-xl">
+    <div className="fixed bottom-4 flex justify-center items-center left-1/2 -translate-x-1/2 w-full sm:w-fit z-50">
+      <div className="relative px-6 py-3 backdrop-blur-md   rounded-2xl shadow-xl">
         <Dock direction="middle">
           <DockIcon className="text-white text-4xl hover:scale-110 transition-transform">
             <Link href="/home" className="flex items-center justify-center">

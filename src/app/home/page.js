@@ -7,7 +7,7 @@ import { getAuth } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 
 const HabitTracker = () => {
-  const { toast } = useToast();
+  const { toast } = useToast();``
   const [habits, setHabits] = useState([]);
   const [showAddHabit, setShowAddHabit] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
@@ -41,8 +41,9 @@ const HabitTracker = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits?userId=${userId}`, {
+      const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+      console.log(backendURL);
+      const response = await fetch(`${backendURL}/api/habits?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -79,9 +80,9 @@ const HabitTracker = () => {
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits/${_id}`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization' : `Bearer ${await auth.currentUser.getIdToken()}`
         },
         body: JSON.stringify(updatedHabit),
       });

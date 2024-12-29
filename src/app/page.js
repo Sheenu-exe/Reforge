@@ -41,7 +41,7 @@ export default function LandingPage() {
       {/* Gradient Overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/30" />
       <header className='h-[10vh] w-full fixed top-0  flex text-2xl dm-sans items-center z-10'>
-       <p className='flex mx-3 gap-x-2 justify-center font-bold'><span className="text-3xl bg-gray-700 p-1 rounded-md"><GiBreakingChain/></span> <span className='m-1'>REFORGE</span></p>
+       <p className='flex mx-3 gap-x-2 justify-center font-bold'><span className="text-3xl bg-zinc-700 p-1 rounded-md"><GiBreakingChain/></span> <span className='m-1'>REFORGE</span></p>
       </header>
       {/* Main Content */}
       <main className="relative z-10">
