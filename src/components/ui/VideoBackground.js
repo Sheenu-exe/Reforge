@@ -8,6 +8,8 @@ const LottieBackground = ({ children }) => {
   const [animationPath, setAnimationPath] = useState('/background.json'); // Default animation
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const updateView = () => {
       const mobileView = window.innerWidth <= 768; // Adjust threshold as needed
       setIsMobile(mobileView);
@@ -23,11 +25,14 @@ const LottieBackground = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Load Lottie animation
+    if (typeof window === 'undefined' || !containerRef.current) return;
+
+    // Destroy previous animation if it exists
     if (animationRef.current) {
       animationRef.current.destroy();
     }
 
+    // Initialize Lottie animation
     animationRef.current = lottie.loadAnimation({
       container: containerRef.current,
       renderer: 'svg',
@@ -40,7 +45,8 @@ const LottieBackground = ({ children }) => {
       if (!animationRef.current) return;
 
       const scrolled = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
       const scrollProgress = Math.min(Math.max(scrolled / maxScroll, 0), 1);
 
       const totalFrames = animationRef.current.totalFrames;
@@ -48,13 +54,13 @@ const LottieBackground = ({ children }) => {
       animationRef.current.goToAndStop(currentFrame, true);
     };
 
-    window.addEventListener('scroll', handleScroll);
-
     const handleResize = () => {
       if (animationRef.current) {
         animationRef.current.resize();
       }
     };
+
+    window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
 
     return () => {
