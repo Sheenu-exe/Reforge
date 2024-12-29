@@ -6,8 +6,10 @@ const MainLayout = ({children}) => {
             <div className="flex-1">
                 {children}
             </div>
-            <div className="fixed bottom-0 left-0 w-full sm:w-fit h-fit z-50 ">
-                <DockDemo/>
+            <div className="fixed bottom-4 left-0 right-0 flex justify-center items-center z-50">
+                <div className="">
+                    <DockDemo/>
+                </div>
             </div>
         </div>
     )
