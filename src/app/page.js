@@ -8,11 +8,12 @@ import { ArrowRight, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeatureCard } from '@/components/FeatureCard';
 import Cookies from 'universal-cookie';
-
+import { GiBreakingChain } from "react-icons/gi";
+import { BarChart, Calendar, CheckSquare } from 'lucide-react';
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const { scrollYProgress } = useScroll();
-  const backgroundOpacity = useTransform(scrollYProgress, [0, 0.8], [0.6, 0.1]);
+  const backgroundOpacity = useTransform(scrollYProgress, [0, 0.8], [0.7, 0.1]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.25], [1, 0.95]);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -39,17 +40,17 @@ export default function LandingPage() {
 
       {/* Gradient Overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/30" />
-      <header className='h-[10vh] w-full fixed top-0 flex justify-center items-center'>
-        REFORGE
+      <header className='h-[10vh] w-full fixed top-0  flex text-2xl dm-sans items-center z-10'>
+       <p className='flex mx-3 gap-x-2 justify-center font-bold'><span className="text-3xl bg-gray-700 p-1 rounded-md"><GiBreakingChain/></span> <span className='m-1'>REFORGE</span></p>
       </header>
       {/* Main Content */}
       <main className="relative z-10">
         {/* Hero Section */}
         <motion.section 
           style={{ opacity: heroOpacity, scale: heroScale }}
-          className="min-h-screen flex flex-col justify-center items-center text-center px-4 sticky top-0"
+          className="min-h-screen flex flex-col justify-center dm-sans items-center text-center px-4 sticky top-0"
         >
-          <h1 className="text-5xl md:text-8xl font-extrabold mb-6 tracking-tighter">
+          <h1 className="text-5xl md:text-8xl font-extrabold mb-6 dm-sans ">
             Break<span className="text-gray-500">.</span>Free<span className="text-gray-500">.</span>Rise
           </h1>
           <p className="text-md md:text-2xl text-gray-400 mb-10 leading-relaxed max-w-2xl">
@@ -84,17 +85,17 @@ export default function LandingPage() {
             <FeatureCard
               title="Quantum Habit Tracking"
               description="Harness AI-powered insights to form lasting habits with unprecedented precision."
-              icon="activity"
+              icon={<CheckSquare className="w-8 h-8 text-black" />}
             />
             <FeatureCard
               title="Adaptive Time Mastery"
               description="Optimize your schedule in real-time, aligning tasks with your peak performance hours."
-              icon="clock"
+              icon={<Calendar className="w-8 h-8 text-black" />}
             />
             <FeatureCard
               title="Holistic Progress Visualization"
               description="Experience your growth journey through immersive, data-driven visual narratives."
-              icon="trending-up"
+              icon={<BarChart className="w-8 h-8 text-black" />}
             />
           </div>
         </section>
