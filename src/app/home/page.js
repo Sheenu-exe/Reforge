@@ -41,9 +41,7 @@ const HabitTracker = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-      console.log(backendURL);
-      const response = await fetch(`${backendURL}/api/habits?userId=${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
