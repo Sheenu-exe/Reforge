@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { updateProfile } from 'firebase/auth';
+import { GiBreakingChain } from "react-icons/gi";
+
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,17 +38,13 @@ const SignUp = () => {
 
       <div className="w-full max-w-md p-8 rounded-2xl bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 flex flex-col space-y-6 relative z-10">
         {/* Logo/Icon */}
-        <div className="flex justify-center mb-2">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-          </div>
+        <div className="flex justify-center text-5xl ">
+        <GiBreakingChain className='bg-zinc-700/50 p-1 rounded-md'/>
         </div>
 
         {/* Brand name */}
         <div className="text-center mb-2">
-          <h1 className="text-xl dm-sans font-semibold">Bento Social</h1>
+          <h1 className="text-xl dm-sans font-semibold">Reforge</h1>
         </div>
 
         {/* Input fields */}
@@ -107,9 +105,9 @@ const SignUp = () => {
 
         {/* Sign up link */}
         <div className="text-center text-sm text-zinc-500">
-          Don't have an account?{' '}
-          <a href="#" className="text-white hover:underline">
-            Sign up, it's free!
+          Already have an account?{' '}
+          <a href="/signIn" className="text-white hover:underline">
+            Sign In here!
           </a>
         </div>
       </div>

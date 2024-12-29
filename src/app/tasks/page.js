@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Check, X, Clock, Plus, Calendar, ListTodo, AlertCircle } from "lucide-react";
 import { format } from 'date-fns';
+import { auth } from "@/lib/firebase.config";
 
 const TodoManager = () => {
   const [todos, setTodos] = useState([]);
@@ -14,21 +15,30 @@ const TodoManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    fetchTodos();
-  }, []);
+  const getAuthToken = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return await user.getIdToken();
+  };
 
-  const fetchTodos = async () => {
+  const fetchTodos = async (user) => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:5000/api/todos', {
+      const token = await user.getIdToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         mode: 'cors',
       });
@@ -41,71 +51,54 @@ const TodoManager = () => {
       setTodos(data);
     } catch (error) {
       console.error('Fetch error:', error);
-      setError('Connection error - please ensure the server is running on port 5000');
-      // Set mock data
-      setTodos([
-        { _id: '1', name: "Complete project proposal", dueDate: "2024-12-26", priority: "high", completed: false },
-        { _id: '2', name: "Review team updates", dueDate: "2024-12-27", priority: "medium", completed: true },
-        { _id: '3', name: "Schedule weekly meeting", dueDate: "2024-12-28", priority: "low", completed: false },
-      ]);
+      setError('Failed to load todos. Please try again later.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleTodo = async (_id) => {
-    try {
-      const todo = todos.find(t => t._id === _id);
-      if (!todo) return;
-
-      const updatedTodo = {
-        ...todo,
-        completed: !todo.completed,
-      };
-  
-      const response = await fetch(`http://localhost:5000/api/todos/${_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTodo),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update todo');
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user);
+      if (user) {
+        fetchTodos(user);
+      } else {
+        setTodos([]);
+        setIsLoading(false);
       }
+    });
 
-      setTodos(prevTodos => 
-        prevTodos.map(t => t._id === _id ? updatedTodo : t)
-      );
-    } catch (error) {
-      console.error('Error updating todo:', error);
-    }
-  };
+    return () => unsubscribe();
+  }, []);
 
   const addNewTodo = async () => {
+    if (!isAuthenticated) {
+      setError('Please sign in to add todos');
+      return;
+    }
+
     if (newTodoName.trim()) {
       try {
-        const newTodo = {
-          name: newTodoName,
-          dueDate: newTodoDueDate,
-          priority: newTodoPriority,
-          completed: false
-        };
-  
-        const response = await fetch('http://localhost:5000/api/todos', {
+        const token = await getAuthToken();
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newTodo),
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: newTodoName,
+            dueDate: newTodoDueDate || new Date(),
+            priority: newTodoPriority,
+          }),
         });
-  
-        if (!response.ok) {
-          throw new Error('Failed to add todo');
-        }
-  
+
+        if (!response.ok) throw new Error('Failed to add todo');
+        
         const createdTodo = await response.json();
         setTodos(prevTodos => [...prevTodos, createdTodo]);
         setNewTodoName('');
         setNewTodoDueDate('');
-        setNewTodoPriority('medium');
         setShowAddTodo(false);
       } catch (error) {
         console.error('Error adding todo:', error);
@@ -113,16 +106,55 @@ const TodoManager = () => {
       }
     }
   };
-  
-  const deleteTodo = async (_id) => {
+
+  const toggleTodo = async (_id) => {
+    if (!isAuthenticated) {
+      setError('Please sign in to update todos');
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:5000/api/todos/${_id}`, {
-        method: 'DELETE',
+      const token = await getAuthToken();
+      const todo = todos.find(t => t._id === _id);
+      if (!todo) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos/${_id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...todo, completed: !todo.completed }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete todo');
-      }
+      if (!response.ok) throw new Error('Failed to update todo');
+
+      const updatedTodo = await response.json();
+      setTodos(prevTodos => 
+        prevTodos.map(t => t._id === _id ? updatedTodo : t)
+      );
+    } catch (error) {
+      console.error('Error updating todo:', error);
+      setError('Failed to update todo. Please try again.');
+    }
+  };
+
+  const deleteTodo = async (_id) => {
+    if (!isAuthenticated) {
+      setError('Please sign in to delete todos');
+      return;
+    }
+
+    try {
+      const token = await getAuthToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos/${_id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete todo');
 
       setTodos(prevTodos => prevTodos.filter(t => t._id !== _id));
     } catch (error) {
@@ -130,6 +162,7 @@ const TodoManager = () => {
       setError('Failed to delete todo. Please try again.');
     }
   };
+
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -149,6 +182,11 @@ const TodoManager = () => {
     if (filter === 'active') return !todo.completed;
     return true;
   });
+
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
 
   return (
     <MainLayout>

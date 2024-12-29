@@ -1,11 +1,14 @@
 'use client'
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, CalendarDays, Clock, Bot, User, Save } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";  // Updated import path
 import MainLayout from '../components/mainLayout';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Button } from '@/components/ui/button';
+import { getAuth } from 'firebase/auth';
+
 const ChatScheduleAssistant = () => {
+  const { toast } = useToast();
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -16,8 +19,7 @@ const ChatScheduleAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
-
-  
+  const auth = getAuth();
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -37,7 +39,7 @@ const ChatScheduleAssistant = () => {
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      
+
       const prompt = `
         Act as an AI scheduling assistant. Based on the following input, suggest a schedule.
         Format the schedule with each line starting with the current time, like this:
@@ -65,16 +67,16 @@ const ChatScheduleAssistant = () => {
     }
   };
 
-  
+
   const formatScheduleText = (text, message) => {
     // Split text into lines and filter out empty ones
     const lines = text.split('\n').filter(line => line.trim());
-    
+
     // Check if this looks like a schedule (contains times)
-    const hasTimeFormat = lines.some(line => 
+    const hasTimeFormat = lines.some(line =>
       line.match(/\d{1,2}:\d{2}\s*(?:AM|PM)/i)
     );
-    
+
     if (hasTimeFormat) {
       return (
         <div className="space-y-4">
@@ -82,18 +84,18 @@ const ChatScheduleAssistant = () => {
           {lines[0] && !lines[0].match(/\d{1,2}:\d{2}\s*(?:AM|PM)/i) && (
             <p className="text-sm">{lines[0]}</p>
           )}
-          
+
           {/* Schedule items */}
           <div className="bg-white/5 rounded-lg p-4 space-y-2">
             {lines.map((line, index) => {
               // Check if line starts with a time
               const timeMatch = line.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
-              
+
               if (timeMatch) {
                 // Extract activity (everything after the hyphen)
                 const [startTime, ...rest] = line.split('-');
                 const activity = rest.join('-').trim();
-                
+
                 return (
                   <div key={index} className="flex items-center space-x-4 py-1.5 hover:bg-white/5 rounded px-2 group">
                     <div className="flex-shrink-0 w-24 font-medium text-violet-300">
@@ -110,11 +112,11 @@ const ChatScheduleAssistant = () => {
                   </p>
                 );
               }
-              
+
               return null;
             })}
           </div>
-          
+
           {/* Save button */}
           <div className="flex justify-end">
             <Button
@@ -126,17 +128,17 @@ const ChatScheduleAssistant = () => {
               Save Schedule
             </Button>
           </div>
-          
+
           {/* Concluding text if it exists */}
-          {lines[lines.length - 1] && 
-           !lines[lines.length - 1].match(/\d{1,2}:\d{2}\s*(?:AM|PM)/i) && 
-           lines.length > 1 && (
-            <p className="text-sm mt-2">{lines[lines.length - 1]}</p>
-          )}
+          {lines[lines.length - 1] &&
+            !lines[lines.length - 1].match(/\d{1,2}:\d{2}\s*(?:AM|PM)/i) &&
+            lines.length > 1 && (
+              <p className="text-sm mt-2">{lines[lines.length - 1]}</p>
+            )}
         </div>
       );
     }
-    
+
     // Return regular text if it's not a schedule
     return text;
   };
@@ -144,7 +146,7 @@ const ChatScheduleAssistant = () => {
   const parseScheduleItems = (text) => {
     const lines = text.split('\n');
     const scheduleItems = [];
-    
+
     lines.forEach(line => {
       const timeMatch = line.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
       if (timeMatch) {
@@ -156,32 +158,41 @@ const ChatScheduleAssistant = () => {
         });
       }
     });
-    
+
     return scheduleItems;
   };
 
   const saveSchedule = async (message) => {
     try {
-      const scheduleItems = parseScheduleItems(message.content);
-      
-      if (scheduleItems.length === 0) {
+      // Check if user is authenticated
+      if (!auth.currentUser) {
         toast({
-          title: "Error",
-          description: "No schedule items found to save",
-          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please sign in to save schedules",
         });
         return;
       }
 
-      const response = await fetch(process.env.BACKEND_URL, {
+      const scheduleItems = parseScheduleItems(message.content);
+
+      if (scheduleItems.length === 0) {
+        toast({
+          title: "No Schedule Found",
+          description: "No schedule items were found to save",
+        });
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         },
         body: JSON.stringify({
           title: 'Daily Schedule',
           scheduleItems: scheduleItems,
-          notes: message.content.split('\n')[0] // First line as notes
+          notes: message.content.split('\n')[0]
         }),
       });
 
@@ -189,19 +200,17 @@ const ChatScheduleAssistant = () => {
         throw new Error('Failed to save schedule');
       }
 
-      const savedSchedule = await response.json();
-      
+      await response.json();
+
       toast({
-        title: "Success",
-        description: "Schedule saved successfully!",
-        variant: "default",
+        title: "Schedule Saved",
+        description: `Saved on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
       });
     } catch (error) {
       console.error('Error saving schedule:', error);
       toast({
-        title: "Error",
-        description: "Failed to save schedule. Please try again.",
-        variant: "destructive",
+        title: "Failed to Save",
+        description: "Could not save your schedule. Please try again.",
       });
     }
   };
@@ -235,22 +244,20 @@ const ChatScheduleAssistant = () => {
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex items-start space-x-3 ${
-                        message.role === 'assistant' ? 'justify-start' : 'justify-end'
-                      }`}
+                      className={`flex items-start space-x-3 ${message.role === 'assistant' ? 'justify-start' : 'justify-end'
+                        }`}
                     >
                       {message.role === 'assistant' && (
                         <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
                           <Bot className="w-5 h-5 text-violet-300" />
                         </div>
                       )}
-                   <div className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-        message.role === 'assistant'
-          ? 'bg-white/5 text-white'
-          : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white'
-      }`}
-      >
-        {typeof message.content === 'string' ? formatScheduleText(message.content, message) : message.content}
+                      <div className={`rounded-2xl px-4 py-3 max-w-[80%] ${message.role === 'assistant'
+                          ? 'bg-white/5 text-white'
+                          : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white'
+                        }`}
+                      >
+                        {typeof message.content === 'string' ? formatScheduleText(message.content, message) : message.content}
                       </div>
                       {message.role === 'user' && (
                         <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">

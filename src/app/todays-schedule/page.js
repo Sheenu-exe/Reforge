@@ -1,21 +1,43 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Trash2, CalendarDays } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import MainLayout from '../components/mainLayout';
+import { getAuth } from 'firebase/auth';
 
 const TodaysSchedulePage = () => {
   const [schedule, setSchedule] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const auth = getAuth();
 
   const fetchTodaysSchedule = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/tasks');
+      // First check if we have a current user
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError('Please sign in to view your schedule');
+        setIsLoading(false);
+        return;
+      }
+
+      // Get the token
+      const token = await currentUser.getIdToken();
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tasks`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch schedule');
       }
+      
       const schedules = await response.json();
       
       // Filter for today's schedule
@@ -27,6 +49,7 @@ const TodaysSchedulePage = () => {
       setSchedule(todaysSchedule);
     } catch (error) {
       console.error('Error fetching schedule:', error);
+      setError('Failed to fetch today\'s schedule');
       toast({
         title: "Error",
         description: "Failed to fetch today's schedule",
@@ -39,8 +62,18 @@ const TodaysSchedulePage = () => {
 
   const deleteSchedule = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const token = await currentUser.getIdToken();
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tasks/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
@@ -63,6 +96,20 @@ const TodaysSchedulePage = () => {
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        fetchTodaysSchedule();
+      } else {
+        setSchedule(null);
+        setIsLoading(false);
+        setError('Please sign in to view your schedule');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const checkNightTime = () => {
     const now = new Date();
     const hours = now.getHours();
@@ -73,14 +120,12 @@ const TodaysSchedulePage = () => {
   };
 
   useEffect(() => {
-    fetchTodaysSchedule();
-    
     const intervalId = setInterval(() => {
       checkNightTime();
     }, 60000); // Check every minute
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [schedule]);
 
   return (
     <MainLayout>
@@ -115,6 +160,17 @@ const TodaysSchedulePage = () => {
                   {isLoading ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="animate-spin w-8 h-8 border-2 border-violet-500 rounded-full border-t-transparent" />
+                    </div>
+                  ) : error ? (
+                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                      <CalendarDays className="w-16 h-16 text-gray-500/50" />
+                      <p className="text-gray-500 text-lg">{error}</p>
+                      <Button 
+                        onClick={() => window.location.href = '/login'}
+                        className="bg-violet-500 hover:bg-violet-600 text-white"
+                      >
+                        Sign In
+                      </Button>
                     </div>
                   ) : !schedule ? (
                     <div className="flex flex-col items-center justify-center h-64 space-y-4">

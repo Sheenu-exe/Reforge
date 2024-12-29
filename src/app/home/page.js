@@ -1,18 +1,20 @@
 'use client'
-'use client'
 import MainLayout from "../components/mainLayout";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Check, X, Trophy, Zap, Plus, Calendar, TrendingUp, RefreshCw } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid';
+import { getAuth } from 'firebase/auth';
+import { useToast } from "@/hooks/use-toast";
 
 const HabitTracker = () => {
+  const { toast } = useToast();
   const [habits, setHabits] = useState([]);
   const [showAddHabit, setShowAddHabit] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedView, setSelectedView] = useState('all');
+  const auth = getAuth();
   const date = new Date();
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const day = days[date.getDay()];
@@ -20,21 +22,32 @@ const HabitTracker = () => {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const month = months[date.getMonth()];
 
+
   useEffect(() => {
-    fetchHabits();
+    // Only fetch habits if user is authenticated
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        fetchHabits(user.uid);
+      } else {
+        setHabits([]);
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const fetchHabits = async () => {
+  const fetchHabits = async (userId) => {
     try {
       setIsLoading(true);
       setError(null);
       
-    
-      const response = await fetch(`https://reforge-backend.onrender.com/api/habits`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         },
         mode: 'cors',
       });
@@ -47,13 +60,7 @@ const HabitTracker = () => {
       setHabits(data);
     } catch (error) {
       console.error('Fetch error:', error);
-      setError(`Connection error - please ensure the server is running on port 5000`);
-      // Set mock data with MongoDB-style _id
-      setHabits([
-        { _id: '1', name: "Morning Workout", streak: 7, completed: false },
-        { _id: '2', name: "Read 30 mins", streak: 12, completed: true },
-        { _id: '3', name: "Meditate", streak: 3, completed: false },
-      ]);
+      setError('Failed to connect to the server. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -70,9 +77,12 @@ const HabitTracker = () => {
         streak: !habit.completed ? Math.min(habit.streak + 1, 21) : Math.max(habit.streak - 1, 0),
       };
   
-      const response = await fetch(`http://localhost:5000/api/habits/${_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits/${_id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
         body: JSON.stringify(updatedHabit),
       });
 
@@ -83,22 +93,48 @@ const HabitTracker = () => {
       setHabits(prevHabits => 
         prevHabits.map(h => h._id === _id ? updatedHabit : h)
       );
+
+      // Add toast notification for habit completion/unmarking
+      toast({
+        title: updatedHabit.completed ? "Habit Completed" : "Habit Unmarked",
+        description: `${updatedHabit.name} - Streak: ${updatedHabit.streak} days`,
+      });
     } catch (error) {
       console.error('Error updating habit:', error);
+      setError('Failed to update habit. Please try again.');
+      
+      toast({
+        title: "Error",
+        description: "Failed to update habit. Please try again.",
+      });
     }
   };
+
   const addNewHabit = async () => {
+    if (!auth.currentUser) {
+      setError('Please sign in to add habits');
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to add habits",
+      });
+      return;
+    }
+
     if (newHabitName.trim()) {
       try {
         const newHabit = {
           name: newHabitName,
           streak: 0,
-          completed: false
+          completed: false,
+          userId: auth.currentUser.uid
         };
   
-        const response = await fetch(`http://localhost:5000/api/habits`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          },
           body: JSON.stringify(newHabit),
         });
   
@@ -110,37 +146,54 @@ const HabitTracker = () => {
         setHabits(prevHabits => [...prevHabits, createdHabit]);
         setNewHabitName('');
         setShowAddHabit(false);
+
+        toast({
+          title: "New Habit Created",
+          description: `${newHabitName} has been added to your habits`,
+        });
       } catch (error) {
         console.error('Error adding habit:', error);
         setError('Failed to add habit. Please try again.');
+        
+        toast({
+          title: "Error",
+          description: "Failed to add habit. Please try again.",
+        });
       }
     }
   };
   
   const deleteHabit = async (_id) => {
     try {
-      console.log('Deleting habit with _id:', _id);
-      
-      const response = await fetch(`http://localhost:5000/api/habits/${_id}`, {
+      const habitToDelete = habits.find(h => h._id === _id);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits/${_id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete habit');
       }
 
-      // Only update state after successful API call
-      setHabits(prevHabits => {
-        const newHabits = prevHabits.filter(h => h._id !== _id);
-        console.log('Habits after deletion:', newHabits);
-        return newHabits;
+      setHabits(prevHabits => prevHabits.filter(h => h._id !== _id));
+      
+      toast({
+        variant: "destructive",
+        title: "Habit Deleted",
+        description: `${habitToDelete.name} has been removed from your habits`,
       });
     } catch (error) {
       console.error('Error deleting habit:', error);
       setError('Failed to delete habit. Please try again.');
+      
+      toast({
+        title: "Error",
+        description: "Failed to delete habit. Please try again.",
+      });
     }
-  };
-
+  }
   const getProgressColor = (streak) => {
     if (streak >= 21) return "bg-gradient-to-r from-violet-500 to-fuchsia-500";
     if (streak >= 14) return "bg-gradient-to-r from-blue-500 to-cyan-500";
