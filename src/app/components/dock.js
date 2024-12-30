@@ -1,5 +1,5 @@
 'use client'
-import { Dock, DockIcon } from "@/ui/dock";
+import { Dock,DockIcon } from "@/components/ui/dock";
 import { CiViewList } from "react-icons/ci";
 import { IoMdHome } from "react-icons/io";
 import { RiRobot3Fill } from "react-icons/ri";
@@ -27,35 +27,35 @@ function DockDemo() {
     <Dock>
       <DockIcon className="text-white hover:scale-110 transition-transform">
         <Link href="/home" className="flex items-center justify-center">
-          <div className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors">
+          <div className=" text-white hover:bg-white/20 p-2 rounded-xl transition-colors">
             <IoMdHome title="Home" className="w-7 h-7 text-white"/>
           </div>
         </Link>
       </DockIcon>
       <DockIcon className="text-white hover:scale-110 transition-transform">
         <Link href={'/tasks'} className="flex items-center justify-center">
-          <div className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors">
+          <div className=" text-white hover:bg-white/20 p-2 rounded-xl transition-colors">
             <CiViewList title="Task Manager" className="w-7 h-7 text-white"/>
           </div>
         </Link>
       </DockIcon>
       <DockIcon className="text-white hover:scale-110 transition-transform">
         <Link href={"/todays-schedule"} className="flex items-center justify-center">
-          <div className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors">
+          <div className=" hover:bg-white/20 p-2 rounded-xl transition-colors">
             <RiCalendarScheduleLine title="Today's schedule" className="w-7 h-7 text-white"/>
           </div>
         </Link>
       </DockIcon>
       <DockIcon className="text-white hover:scale-110 transition-transform">
         <Link href={"/chatbot"} className="flex items-center justify-center">
-          <div className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors">
+          <div className=" text-white hover:bg-white/20 p-2 rounded-xl transition-colors">
             <RiRobot3Fill title="AI Assistant" className="w-7 h-7 text-white"/>
           </div>
         </Link>
       </DockIcon>
       <DockIcon className="text-white hover:scale-110 transition-transform">
         <Link href={"/profile"} className="flex items-center justify-center">
-          <div className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors">
+          <div className=" hover:bg-white/20 p-2 rounded-xl transition-colors">
             {profileImage ? (
               <img 
                 src={profileImage} 
