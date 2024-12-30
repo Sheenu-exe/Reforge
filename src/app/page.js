@@ -58,7 +58,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <Button asChild size="lg" variant="premium" className="rounded-full text-lg px-8 py-6 w-full sm:w-auto">
-              <Link href="/signup" className="inline-flex items-center justify-center gap-3">
+              <Link href="/signUp" className="inline-flex items-center justify-center gap-3">
                 Start Your Journey
                 <ArrowRight className="w-5 h-5" />
               </Link>

@@ -1,4 +1,3 @@
-// mainLayout.js
 import DockDemo from "./dock";
 
 const MainLayout = ({children}) => {
