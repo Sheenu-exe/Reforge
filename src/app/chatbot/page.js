@@ -217,7 +217,7 @@ const ChatScheduleAssistant = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-[90vh] bg-gradient-to-b from-zinc-900 to-zinc-950">
+      <div className="h-[90vh] bg-gradient-to-b from-zinc-900 to-zinc-950">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 blur-3xl" />
           <div className="relative">

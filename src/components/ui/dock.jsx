@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_MAGNIFICATION = 60;

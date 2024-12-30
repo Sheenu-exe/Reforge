@@ -160,7 +160,7 @@ const Profile = () => {
   
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-950">
+      <div className="min-h-[90vh] bg-gray-950">
         {/* Background Container */}
         <div className="h-[200px] bg-gray-900 relative">
           {userData.coverImage && (
