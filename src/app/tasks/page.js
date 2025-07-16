@@ -24,7 +24,9 @@ const TodoManager = () => {
     }
     return await user.getIdToken();
   };
-
+  useEffect(() => {
+    console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+  }, []);
   const fetchTodos = async (user) => {
     if (!user) return;
     
