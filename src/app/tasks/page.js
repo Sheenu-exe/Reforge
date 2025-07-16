@@ -183,9 +183,9 @@ const TodoManager = () => {
     return true;
   });
 
-  useEffect(() => {
-    fetchTodos();
-  }, []);
+  // useEffect(() => {
+  //   fetchTodos();
+  // }, []);
 
 
   return (
