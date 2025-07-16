@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { Check, X, Trophy, Zap, Plus, Calendar, TrendingUp, RefreshCw } from "lucide-react";
 import { getAuth } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
-import { useRef } from "react";
 
 const HabitTracker = () => {
   const { toast } = useToast();
@@ -15,9 +14,6 @@ const HabitTracker = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedView, setSelectedView] = useState('all');
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const listRef = useRef(null);
   const auth = getAuth();
   const date = new Date();
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -41,12 +37,11 @@ const HabitTracker = () => {
     return () => unsubscribe();
   }, []);
 
-  const fetchHabits = async (userId, skip = 0, limit = 20, append = false) => {
+  const fetchHabits = async (userId) => {
     try {
-      if (append) setIsFetchingMore(true);
-      else setIsLoading(true);
+      setIsLoading(true);
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits?userId=${userId}&limit=${limit}&skip=${skip}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/habits?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -61,35 +56,14 @@ const HabitTracker = () => {
       }
       
       const data = await response.json();
-      if (append) {
-        setHabits(prev => [...prev, ...data]);
-        setHasMore(data.length === limit);
-      } else {
-        setHabits(data);
-        setHasMore(data.length === limit);
-      }
+      setHabits(data);
     } catch (error) {
       console.error('Fetch error:', error);
       setError('Failed to connect to the server. Please try again later.');
     } finally {
-      if (append) setIsFetchingMore(false);
-      else setIsLoading(false);
+      setIsLoading(false);
     }
   };
-
-  // Infinite scroll handler
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!listRef.current || isLoading || isFetchingMore || !hasMore) return;
-      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-      if (scrollHeight - scrollTop - clientHeight < 200) {
-        // Near bottom, fetch more
-        fetchHabits(auth.currentUser.uid, habits.length, 20, true);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [habits, isLoading, isFetchingMore, hasMore]);
 
   const toggleHabit = async (_id) => {
     try {

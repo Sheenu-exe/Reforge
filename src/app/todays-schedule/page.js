@@ -26,7 +26,7 @@ const TodaysSchedulePage = () => {
       // Get the token
       const token = await currentUser.getIdToken();
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tasks?limit=1&skip=0`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tasks`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',

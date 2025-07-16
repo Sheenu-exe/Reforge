@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { Check, X, Clock, Plus, Calendar, ListTodo, AlertCircle } from "lucide-react";
 import { format } from 'date-fns';
 import { auth } from "@/lib/firebase.config";
-import { useRef } from "react";
 
 const TodoManager = () => {
   const [todos, setTodos] = useState([]);
@@ -17,9 +16,6 @@ const TodoManager = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const listRef = useRef(null);
 
   const getAuthToken = async () => {
     const user = auth.currentUser;
@@ -29,16 +25,15 @@ const TodoManager = () => {
     return await user.getIdToken();
   };
 
-  const fetchTodos = async (user, skip = 0, limit = 20, append = false) => {
+  const fetchTodos = async (user) => {
     if (!user) return;
     
     try {
-      if (append) setIsFetchingMore(true);
-      else setIsLoading(true);
+      setIsLoading(true);
       setError(null);
       
       const token = await user.getIdToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos?limit=${limit}&skip=${skip}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/todos`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -53,19 +48,12 @@ const TodoManager = () => {
       }
       
       const data = await response.json();
-      if (append) {
-        setTodos(prev => [...prev, ...data]);
-        setHasMore(data.length === limit);
-      } else {
-        setTodos(data);
-        setHasMore(data.length === limit);
-      }
+      setTodos(data);
     } catch (error) {
       console.error('Fetch error:', error);
       setError('Failed to load todos. Please try again later.');
     } finally {
-      if (append) setIsFetchingMore(false);
-      else setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -82,20 +70,6 @@ const TodoManager = () => {
 
     return () => unsubscribe();
   }, []);
-
-  // Infinite scroll handler
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!listRef.current || isLoading || isFetchingMore || !hasMore) return;
-      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-      if (scrollHeight - scrollTop - clientHeight < 200) {
-        // Near bottom, fetch more
-        fetchTodos(auth.currentUser, todos.length, 20, true);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [todos, isLoading, isFetchingMore, hasMore]);
 
   const addNewTodo = async () => {
     if (!isAuthenticated) {
@@ -377,71 +351,77 @@ const TodoManager = () => {
           )}
 
           {/* Todos List */}
-          <div ref={listRef} className="grid grid-cols-1 gap-4">
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-20 bg-zinc-800 rounded-2xl animate-pulse" />
-                ))
-              : filteredTodos.map((todo) => (
-                  <motion.div
-                    key={todo._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`group relative bg-gradient-to-r from-white/5 to-white/[0.02] rounded-2xl p-6 
-                             hover:from-white/10 hover:to-white/[0.05] transition-all duration-300
-                             ${todo.completed ? 'opacity-60' : ''}`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 opacity-0 
-                                  group-hover:opacity-100 transition-opacity rounded-2xl blur-xl" />
-                    
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => toggleTodo(todo._id)}
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300
-                                   ${todo.completed ? 'bg-blue-500' : 'bg-white/5 hover:bg-white/10'}`}
-                        >
-                          <Check className={`w-5 h-5 ${todo.completed ? 'text-white' : 'text-white/40'}`} />
-                        </motion.button>
-                        
-                        <div>
-                          <h3 className={`text-lg font-medium text-white ${todo.completed ? 'line-through' : ''}`}>
-                            {todo.name}
-                          </h3>
-                          <div className="flex items-center space-x-3 mt-1">
-                            <div className="flex items-center space-x-1">
-                              <Clock className={`w-4 h-4 ${getPriorityColor(todo.priority)}`} />
-                              <span className="text-sm text-white/60">
-                                {format(new Date(todo.dueDate), 'MMM d')}
-                              </span>
-                            </div>
-                            <span className={`text-sm capitalize ${getPriorityColor(todo.priority)}`}>
-                              {todo.priority} priority
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : todos.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-white/40">No todos found. Create one to get started!</div>
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-1 gap-4"
+            >
+              {filteredTodos.map((todo) => (
+                <motion.div
+                  key={todo._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`group relative bg-gradient-to-r from-white/5 to-white/[0.02] rounded-2xl p-6 
+                           hover:from-white/10 hover:to-white/[0.05] transition-all duration-300
+                           ${todo.completed ? 'opacity-60' : ''}`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 opacity-0 
+                                group-hover:opacity-100 transition-opacity rounded-2xl blur-xl" />
+                  
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => deleteTodo(todo._id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 
-                                 hover:bg-rose-500/20 hover:text-rose-500 transition-colors"
+                        onClick={() => toggleTodo(todo._id)}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300
+                                 ${todo.completed ? 'bg-blue-500' : 'bg-white/5 hover:bg-white/10'}`}
                       >
-                        <X className="w-4 h-4" />
+                        <Check className={`w-5 h-5 ${todo.completed ? 'text-white' : 'text-white/40'}`} />
                       </motion.button>
+                      
+                      <div>
+                        <h3 className={`text-lg font-medium text-white ${todo.completed ? 'line-through' : ''}`}>
+                          {todo.name}
+                        </h3>
+                        <div className="flex items-center space-x-3 mt-1">
+                          <div className="flex items-center space-x-1">
+                            <Clock className={`w-4 h-4 ${getPriorityColor(todo.priority)}`} />
+                            <span className="text-sm text-white/60">
+                              {format(new Date(todo.dueDate), 'MMM d')}
+                            </span>
+                          </div>
+                          <span className={`text-sm capitalize ${getPriorityColor(todo.priority)}`}>
+                            {todo.priority} priority
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </motion.div>
-                ))}
-            {isFetchingMore && (
-              <div className="flex items-center justify-center py-4">
-                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => deleteTodo(todo._id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 
+                               hover:bg-rose-500/20 hover:text-rose-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </div>
     </MainLayout>
