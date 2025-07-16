@@ -3,9 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, CalendarDays, Clock, Bot, User, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";  // Updated import path
 import MainLayout from '../components/mainLayout';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Button } from '@/components/ui/button';
 import { getAuth } from 'firebase/auth';
+import { GoogleGenAI } from "@google/genai";
+
+const genAI = new GoogleGenAI({
+  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+});
 
 const ChatScheduleAssistant = () => {
   const { toast } = useToast();
@@ -18,7 +22,6 @@ const ChatScheduleAssistant = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
   const auth = getAuth();
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,23 +41,13 @@ const ChatScheduleAssistant = () => {
     setIsLoading(true);
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-      const prompt = `
-        Act as an AI scheduling assistant. Based on the following input, suggest a schedule.
-        Format the schedule with each line starting with the current time, like this:
-        9:00 AM - Wake up and get ready
-        10:00 AM - Team meeting
-        Make your response natural and friendly, and ask follow-up questions if needed.
-        Previous context: ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
-        
-        User's message: ${userMessage}
-      `;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const assistantMessage = response.text();
-
+      const response = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          `Act as an AI scheduling assistant. Based on the following input, suggest a schedule.\nFormat the schedule with each line starting with the current time, like this:\n9:00 AM - Wake up and get ready\n10:00 AM - Team meeting\nMake your response natural and friendly, and ask follow-up questions if needed.\nPrevious context: ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUser's message: ${userMessage}`
+        ],
+      });
+      const assistantMessage = response.text;
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
     } catch (error) {
       console.error('Error:', error);
